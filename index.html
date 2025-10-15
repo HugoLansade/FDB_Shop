@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes Courses</title>
+  <style>
+    
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background: #f7f7f7;
+      transition: background 0.3s ease;
+    }
+  
+    /* Container pour centrage */
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      padding-bottom: 6rem; /* espace pour éviter d’être caché par la bottom bar */
+    }
+  
+    /* Pages */
+    .page {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      padding: 1rem;
+    }
+    .active {
+      display: block;
+      opacity: 1;
+    }
+  
+    /* Splash / Welcome */
+    .splash {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #000000;
+    }
+  
+    /* Carte produit */
+    .product-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+  
+    .product-card button.btn {
+      min-width: 80px;
+      text-align: center;
+      background: #FDB52D;
+      color: white;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  
+    /* Barre de recherche améliorée */
+    .search-bar {
+      width: 100%;
+      padding: 0.6rem 1rem;
+      margin: 0.5rem 0;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      font-size: 1rem;
+      transition: border 0.3s, box-shadow 0.3s;
+      box-sizing: border-box;
+    }
+    .search-bar:focus {
+      border-color: #FDB52D;
+      box-shadow: 0 2px 8px rgba(253, 213, 150, 0.5);
+      outline: none;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+  
+    /* Carte catégorie */
+    .category {
+      background: white;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+  
+    .back-arrow {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .back-arrow:hover svg path {
+      stroke: #FDB52D; /* couleur au survol */
+    }
+
+    /* Ligne dans récap / live */
+    .recap-row, .live-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0.25rem 0;
+    }
+  
+    .recap-actions {
+      display: flex;
+      align-items: center;
+    }
+  
+    /* Boutons + / - unifiés */
+    button.qty-btn, button.recap {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid #FEDA96;
+      background: #FEDA96;
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 4px;
+      transition: transform 0.1s ease, background 0.3s ease;
+    }
+    button.qty-btn:active, button.recap:active {
+      transform: scale(0.95);
+      background: #FDB52D;
+    }
+
+    /* Numéro de quantité */
+    .qty-num {
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #FEDA96;
+      margin: 0 6px;
+    }
+  
+    /* Bouton principal */
+    .btn {
+      background: #FDB52D;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+    .btn:hover { background: #fca91b; }
+    .btn:disabled { background: #ccc; }
+  
+    /* Bouton “commencer les courses” */
+    .btn-live {
+      background: #ff4b4b;
+      color: white;
+      font-weight: bold;
+      width: 100%;
+      margin-top: 1rem;
+    }
+  
+    /* Case cochée */
+    .checked {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+  
+    /* Bottom bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 -4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Live qty jaune bold */
+    .live-item div:last-child {
+      font-weight: bold;
+      color: #FEDA96;
+    }
+
+    /* Espacement checkbox nom */
+    .live-left span {
+      margin-left: 0.5rem;
+    }
+
+    /* Header récap : titre centré */
+    .header-recap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative; /* pour placer le bouton retour sur le côté */
+      margin-bottom: 1rem;
+    }
+
+    .header-recap button {
+      position: absolute;
+      left: 0;
+    }
+
+    /* Container pour bouton “commencer les courses” */
+    #start-live-btn {
+      display: block;
+      margin-top: 1rem;
+      width: 100%;
+      text-align: center;
+    }
+
+
+  </style>
+  
+</head>
+<body>
+
+  <!-- Page Welcome -->
+  <div id="page-welcome" class="page splash active">
+    <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 100 100" fill="none">
+      <path d="M35.9961 57.6426H42.7285V60.291H39.6406V61.1582H42.7285V63.7129H39.6406V67H35.9961V57.6426ZM43.7539 57.6426C43.7539 57.6426 43.8711 57.6348 44.1055 57.6191C44.3398 57.5996 44.6465 57.5762 45.0254 57.5488C45.4043 57.5215 45.8164 57.4961 46.2617 57.4727C46.707 57.4453 47.1445 57.4238 47.5742 57.4082C48.0078 57.3887 48.3906 57.3789 48.7227 57.3789C49.4883 57.3789 50.1523 57.5234 50.7148 57.8125C51.2773 58.1016 51.7422 58.4883 52.1094 58.9727C52.4766 59.4531 52.75 59.9863 52.9297 60.5723C53.1094 61.1543 53.1992 61.7402 53.1992 62.3301C53.1992 63.0645 53.0742 63.7207 52.8242 64.2988C52.5742 64.877 52.2246 65.3672 51.7754 65.7695C51.3301 66.1719 50.8047 66.4785 50.1992 66.6895C49.5977 66.8965 48.9453 67 48.2422 67H43.7539V57.6426ZM47.3984 64.1816C47.6055 64.0059 47.8281 63.8301 48.0664 63.6543C48.3047 63.4785 48.5293 63.291 48.7402 63.0918C48.9551 62.8926 49.1289 62.6699 49.2617 62.4238C49.3984 62.1738 49.4668 61.8867 49.4668 61.5625C49.4668 61.3477 49.4219 61.1289 49.332 60.9062C49.2422 60.6836 49.1113 60.498 48.9395 60.3496C48.7715 60.1973 48.5625 60.1211 48.3125 60.1211C48.1328 60.1211 47.9629 60.1699 47.8027 60.2676C47.6465 60.3652 47.5117 60.4805 47.3984 60.6133V64.1816ZM54.3594 57.6426C54.3594 57.6426 54.4688 57.6387 54.6875 57.6309C54.9062 57.6191 55.1934 57.6055 55.5488 57.5898C55.9043 57.5742 56.291 57.5605 56.709 57.5488C57.127 57.5332 57.5391 57.5215 57.9453 57.5137C58.3516 57.502 58.709 57.4961 59.0176 57.4961C60.1777 57.4961 61.0938 57.5859 61.7656 57.7656C62.4414 57.9414 62.9238 58.1934 63.2129 58.5215C63.502 58.8457 63.6465 59.2324 63.6465 59.6816C63.6465 60.1113 63.5332 60.4727 63.3066 60.7656C63.084 61.0547 62.7422 61.3047 62.2812 61.5156C62.6055 61.625 62.916 61.7812 63.2129 61.9844C63.5098 62.1875 63.7539 62.4707 63.9453 62.834C64.1367 63.1934 64.2324 63.6699 64.2324 64.2637C64.2324 64.8105 64.1191 65.2617 63.8926 65.6172C63.6699 65.9727 63.3711 66.2539 62.9961 66.4609C62.6211 66.6641 62.2031 66.8145 61.7422 66.9121C61.2812 67.0059 60.8125 67.0664 60.3359 67.0938C59.8594 67.1211 59.4102 67.1348 58.9883 67.1348C58.8516 67.1348 58.627 67.1309 58.3145 67.123C58.0059 67.1152 57.6543 67.1055 57.2598 67.0938C56.8691 67.082 56.4785 67.0684 56.0879 67.0527C55.6973 67.0371 55.3457 67.0215 55.0332 67.0059C54.7246 66.9941 54.5 66.9844 54.3594 66.9766V57.6426ZM58.0215 61.9258C58.3535 61.7969 58.6719 61.6602 58.9766 61.5156C59.2852 61.3672 59.5371 61.1973 59.7324 61.0059C59.9277 60.8145 60.0254 60.5879 60.0254 60.3262C60.0254 60.1543 59.959 60.0273 59.8262 59.9453C59.6973 59.8633 59.5664 59.8223 59.4336 59.8223C59.3008 59.8223 59.1543 59.8516 58.9941 59.9102C58.834 59.9648 58.6816 60.0293 58.5371 60.1035C58.3926 60.1777 58.2715 60.2441 58.1738 60.3027C58.0801 60.3613 58.0293 60.3945 58.0215 60.4023V61.9258ZM60.3359 63.3613C60.3359 63.1816 60.2793 63.0547 60.166 62.9805C60.0566 62.9062 59.9199 62.8691 59.7559 62.8691C59.5801 62.8691 59.3828 62.9141 59.1641 63.0039C58.9453 63.0938 58.7344 63.1953 58.5312 63.3086C58.3281 63.4219 58.1582 63.5117 58.0215 63.5781V65.0547L58.3262 64.9375C58.7324 64.7852 59.0859 64.6426 59.3867 64.5098C59.6875 64.373 59.9199 64.2168 60.084 64.041C60.252 63.8613 60.3359 63.6348 60.3359 63.3613Z" fill="#EDB120"/>
+      <path d="M42.5879 74.8789C42.4551 74.9883 42.3809 75.1836 42.3652 75.4648C42.3574 75.7383 42.4043 76.0195 42.5059 76.3086C42.6152 76.5898 42.7793 76.8398 42.998 77.0586C43.2168 77.2773 43.4902 77.3867 43.8184 77.3867C44.0293 77.3867 44.209 77.3359 44.3574 77.2344C44.5137 77.1328 44.6387 77.0078 44.7324 76.8594C44.834 76.7031 44.9082 76.5312 44.9551 76.3438C45.002 76.1562 45.0254 75.9727 45.0254 75.793C45.0254 75.5352 44.9746 75.3203 44.873 75.1484C44.7793 74.9766 44.6504 74.8281 44.4863 74.7031C44.3301 74.5703 44.1465 74.4609 43.9355 74.375C43.7324 74.2812 43.5254 74.1875 43.3145 74.0938C43.1191 74.0156 42.8848 73.918 42.6113 73.8008C42.3379 73.6758 42.0762 73.5156 41.8262 73.3203C41.5762 73.1172 41.3613 72.8711 41.1816 72.582C41.0098 72.2852 40.9238 71.9219 40.9238 71.4922C40.9238 71.2109 40.998 70.9258 41.1465 70.6367C41.2949 70.3477 41.5059 70.0859 41.7793 69.8516C42.0527 69.6094 42.3809 69.4141 42.7637 69.2656C43.1543 69.1172 43.5918 69.043 44.0762 69.043C44.5527 69.043 44.9395 69.0859 45.2363 69.1719C45.5332 69.2578 45.7637 69.3711 45.9277 69.5117C46.0918 69.6445 46.2012 69.793 46.2559 69.957C46.3184 70.1133 46.3496 70.2617 46.3496 70.4023C46.3496 70.543 46.3066 70.6875 46.2207 70.8359C46.1348 70.9766 46.0332 71.1094 45.916 71.2344C45.7988 71.3516 45.6777 71.457 45.5527 71.5508C45.4277 71.6367 45.3262 71.6953 45.248 71.7266C45.2871 71.625 45.3262 71.4844 45.3652 71.3047C45.4043 71.125 45.3926 70.9453 45.3301 70.7656C45.2754 70.5859 45.1387 70.4297 44.9199 70.2969C44.709 70.1641 44.3652 70.0977 43.8887 70.0977C43.6152 70.0977 43.3496 70.1406 43.0918 70.2266C42.834 70.3125 42.6035 70.4258 42.4004 70.5664C42.2051 70.6992 42.0488 70.8516 41.9316 71.0234C41.8145 71.1953 41.7559 71.3711 41.7559 71.5508C41.7559 71.7227 41.8145 71.8828 41.9316 72.0312C42.0566 72.1719 42.2207 72.3086 42.4238 72.4414C42.6348 72.5664 42.873 72.6914 43.1387 72.8164C43.4121 72.9414 43.6973 73.0664 43.9941 73.1914C44.2832 73.3164 44.5684 73.4531 44.8496 73.6016C45.1309 73.7422 45.3809 73.9062 45.5996 74.0938C45.8262 74.2812 46.0059 74.4922 46.1387 74.7266C46.2715 74.9609 46.3379 75.2305 46.3379 75.5352C46.3379 75.8633 46.2754 76.1797 46.1504 76.4844C46.0332 76.7812 45.8613 77.043 45.6348 77.2695C45.416 77.4961 45.1465 77.6758 44.8262 77.8086C44.5059 77.9492 44.1426 78.0195 43.7363 78.0195C43.377 78.0195 43.0371 77.9609 42.7168 77.8438C42.3965 77.7266 42.1152 77.5742 41.873 77.3867C41.6387 77.1992 41.4512 76.9922 41.3105 76.7656C41.1699 76.5391 41.0996 76.3164 41.0996 76.0977C41.0996 75.8633 41.1504 75.6641 41.252 75.5C41.3613 75.3359 41.4941 75.207 41.6504 75.1133C41.8066 75.0117 41.9668 74.9414 42.1309 74.9023C42.3027 74.8633 42.4551 74.8555 42.5879 74.8789ZM48.0723 75.1602C48.166 74.8789 48.2441 74.6406 48.3066 74.4453C48.377 74.25 48.4355 74.0938 48.4824 73.9766C48.5371 73.8359 48.584 73.7227 48.623 73.6367C48.6699 73.5117 48.7207 73.3867 48.7754 73.2617C48.8379 73.1367 48.9004 73.0234 48.9629 72.9219C49.0254 72.8125 49.084 72.7227 49.1387 72.6523C49.1934 72.582 49.2402 72.5352 49.2793 72.5117C49.3105 72.4961 49.3809 72.4961 49.4902 72.5117C49.6074 72.5273 49.7324 72.5664 49.8652 72.6289C50.0059 72.6836 50.1348 72.7617 50.252 72.8633C50.377 72.9648 50.4629 73.0898 50.5098 73.2383C50.5566 73.418 50.5723 73.6523 50.5566 73.9414C50.541 74.2305 50.5176 74.5273 50.4863 74.832C50.4629 75.1367 50.4434 75.4258 50.4277 75.6992C50.4199 75.9727 50.4395 76.1797 50.4863 76.3203C50.5176 76.3984 50.5488 76.4766 50.5801 76.5547C50.6113 76.6172 50.6465 76.6836 50.6855 76.7539C50.7324 76.8164 50.7832 76.8711 50.8379 76.918C50.6113 77.0039 50.4277 77.0664 50.2871 77.1055C50.1543 77.1523 50.0527 77.1836 49.9824 77.1992C49.8965 77.2227 49.8379 77.2266 49.8066 77.2109C49.7441 77.1875 49.6855 77.1289 49.6309 77.0352C49.5762 76.9414 49.5293 76.793 49.4902 76.5898C49.4746 76.5273 49.4707 76.418 49.4785 76.2617C49.4863 76.1055 49.498 75.9297 49.5137 75.7344C49.5293 75.5391 49.5449 75.3359 49.5605 75.125C49.5762 74.9062 49.5918 74.7031 49.6074 74.5156C49.623 74.3281 49.6309 74.1641 49.6309 74.0234C49.6387 73.8828 49.6387 73.7891 49.6309 73.7422C49.5918 73.6094 49.5371 73.5156 49.4668 73.4609C49.3965 73.3984 49.3418 73.3906 49.3027 73.4375C49.209 73.5547 49.1035 73.7578 48.9863 74.0469C48.877 74.3281 48.7715 74.6367 48.6699 74.9727C48.5684 75.3008 48.4785 75.6289 48.4004 75.957C48.3301 76.2852 48.2871 76.5547 48.2715 76.7656C48.2715 76.8125 48.2324 76.8633 48.1543 76.918C48.084 76.9648 48.002 77.0078 47.9082 77.0469C47.8223 77.0859 47.7363 77.1094 47.6504 77.1172C47.5645 77.1328 47.5059 77.1211 47.4746 77.082C47.4512 77.0586 47.4004 77.0039 47.3223 76.918C47.252 76.832 47.2129 76.6875 47.2051 76.4844C47.1895 76.2891 47.1895 76.0234 47.2051 75.6875C47.2207 75.3438 47.2246 74.9844 47.2168 74.6094V73.7422C47.2168 73.3906 47.2129 72.9062 47.2051 72.2891C47.2051 71.6641 47.2012 70.8398 47.1934 69.8164C47.2793 69.7695 47.3574 69.7305 47.4277 69.6992C47.498 69.6602 47.5645 69.6289 47.627 69.6055C47.6973 69.5742 47.7637 69.5508 47.8262 69.5352C48.1621 69.4492 48.3379 69.4492 48.3535 69.5352C48.3613 69.6133 48.3535 69.8633 48.3301 70.2852C48.3223 70.4648 48.3105 70.6914 48.2949 70.9648C48.2793 71.2383 48.2598 71.5703 48.2363 71.9609C48.2207 72.3516 48.1973 72.8125 48.166 73.3438C48.1426 73.8672 48.1113 74.4727 48.0723 75.1602ZM54.6348 74.9844C54.6191 75.2891 54.5645 75.5703 54.4707 75.8281C54.3848 76.0859 54.2637 76.3125 54.1074 76.5078C53.9512 76.6953 53.7637 76.8438 53.5449 76.9531C53.334 77.0625 53.0996 77.1211 52.8418 77.1289C52.6152 77.1367 52.4004 77.082 52.1973 76.9648C52.002 76.8477 51.8301 76.6836 51.6816 76.4727C51.5332 76.2617 51.4199 76.0117 51.3418 75.7227C51.2715 75.4258 51.252 75.1055 51.2832 74.7617C51.3066 74.3633 51.3809 74.0234 51.5059 73.7422C51.6309 73.4531 51.7637 73.2148 51.9043 73.0273C52.0449 72.8398 52.1738 72.7031 52.291 72.6172C52.416 72.5234 52.4941 72.4688 52.5254 72.4531C52.5801 72.4297 52.6309 72.4258 52.6777 72.4414C52.7246 72.4492 52.7754 72.4609 52.8301 72.4766C52.8457 72.4844 52.8613 72.5039 52.877 72.5352C52.9082 72.5898 52.9277 72.6914 52.9355 72.8398C52.9746 72.7539 53.0254 72.6836 53.0879 72.6289C53.1504 72.5742 53.2129 72.5352 53.2754 72.5117C53.3535 72.4805 53.4316 72.4609 53.5098 72.4531C53.5645 72.4453 53.6582 72.4883 53.791 72.582C53.9316 72.6758 54.0645 72.8242 54.1895 73.0273C54.3223 73.2305 54.4355 73.4961 54.5293 73.8242C54.623 74.1445 54.6582 74.5312 54.6348 74.9844ZM53.8379 74.8438C53.8457 74.6562 53.8379 74.4688 53.8145 74.2812C53.7988 74.0859 53.7676 73.9102 53.7207 73.7539C53.6816 73.5898 53.6309 73.4609 53.5684 73.3672C53.5059 73.2656 53.4434 73.2148 53.3809 73.2148C53.3105 73.2305 53.2324 73.2656 53.1465 73.3203C53.0762 73.3672 52.998 73.4414 52.9121 73.543C52.8262 73.6445 52.7441 73.7891 52.666 73.9766C52.6582 73.9531 52.6504 73.9102 52.6426 73.8477C52.6348 73.793 52.627 73.7227 52.6191 73.6367C52.6191 73.543 52.627 73.418 52.6426 73.2617C52.5332 73.3945 52.4473 73.5508 52.3848 73.7305C52.3301 73.9102 52.2871 74.082 52.2559 74.2461C52.2246 74.4414 52.2012 74.6367 52.1855 74.832C52.1777 75.043 52.1855 75.25 52.209 75.4531C52.2402 75.6562 52.2871 75.8359 52.3496 75.9922C52.4199 76.1484 52.502 76.2734 52.5957 76.3672C52.6895 76.4609 52.8027 76.5039 52.9355 76.4961C53.0684 76.4883 53.1855 76.4336 53.2871 76.332C53.3887 76.2305 53.4785 76.1016 53.5566 75.9453C53.6348 75.7891 53.6973 75.6133 53.7441 75.418C53.791 75.2227 53.8223 75.0312 53.8379 74.8438ZM57.5527 72.3594C57.7715 72.3594 57.9746 72.4219 58.1621 72.5469C58.3496 72.6719 58.5098 72.8359 58.6426 73.0391C58.7754 73.2422 58.8809 73.4766 58.959 73.7422C59.0371 74 59.0762 74.2695 59.0762 74.5508C59.0762 74.832 59.0449 75.1289 58.9824 75.4414C58.9199 75.7539 58.8223 76.043 58.6895 76.3086C58.5566 76.5742 58.3848 76.7969 58.1738 76.9766C57.9629 77.1484 57.7051 77.2344 57.4004 77.2344C57.1582 77.2344 56.9277 77.1484 56.709 76.9766C56.498 76.7969 56.334 76.5742 56.2168 76.3086C56.2012 76.582 56.166 76.8594 56.1113 77.1406C56.0566 77.4297 56.0293 77.7734 56.0293 78.1719C56.0293 78.2891 56.0332 78.4219 56.041 78.5703C56.0488 78.7188 56.0605 78.8672 56.0762 79.0156C56.0918 79.1641 56.1152 79.3008 56.1465 79.4258C56.1777 79.5508 56.2129 79.6484 56.252 79.7188C56.1191 79.7969 55.998 79.8555 55.8887 79.8945C55.7871 79.9336 55.6973 79.9609 55.6191 79.9766C55.5332 80 55.4512 80.0117 55.373 80.0117C55.2715 80.0117 55.2051 79.9688 55.1738 79.8828C55.1426 79.7969 55.127 79.6445 55.127 79.4258C55.127 79.2852 55.1309 79.082 55.1387 78.8164C55.1543 78.5586 55.1699 78.2617 55.1855 77.9258C55.209 77.5898 55.2285 77.2383 55.2441 76.8711C55.2676 76.4961 55.2871 76.1289 55.3027 75.7695C55.3262 75.4102 55.3418 75.0781 55.3496 74.7734C55.3652 74.4609 55.373 74.1992 55.373 73.9883C55.373 73.7305 55.3691 73.5312 55.3613 73.3906C55.3535 73.2422 55.3418 73.1328 55.3262 73.0625C55.3184 72.9844 55.3066 72.9297 55.291 72.8984C55.2754 72.8672 55.2559 72.832 55.2324 72.793C55.3027 72.7383 55.3848 72.6914 55.4785 72.6523C55.5801 72.6055 55.6777 72.5742 55.7715 72.5586C55.873 72.5352 55.9629 72.5273 56.041 72.5352C56.127 72.543 56.1934 72.5625 56.2402 72.5938C56.2793 72.6328 56.3066 72.6914 56.3223 72.7695C56.3457 72.8477 56.3652 72.9648 56.3809 73.1211C56.5293 72.918 56.6973 72.7422 56.8848 72.5938C57.0801 72.4375 57.3027 72.3594 57.5527 72.3594ZM57.0957 76.543C57.2363 76.543 57.3691 76.4766 57.4941 76.3438C57.627 76.2109 57.7402 76.043 57.834 75.8398C57.9355 75.6289 58.0137 75.3984 58.0684 75.1484C58.1309 74.8906 58.1621 74.6367 58.1621 74.3867C58.1621 74.1133 58.1348 73.8906 58.0801 73.7188C58.0332 73.5391 57.9707 73.3984 57.8926 73.2969C57.8223 73.1875 57.7441 73.1133 57.6582 73.0742C57.5801 73.0273 57.5098 73.0039 57.4473 73.0039C57.2988 73.0039 57.1582 73.0664 57.0254 73.1914C56.8926 73.3086 56.7754 73.4648 56.6738 73.6602C56.5723 73.8477 56.4902 74.0586 56.4277 74.293C56.373 74.5273 56.3457 74.7617 56.3457 74.9961C56.3457 75.2148 56.3652 75.418 56.4043 75.6055C56.4512 75.793 56.5098 75.957 56.5801 76.0977C56.6504 76.2383 56.7285 76.3477 56.8145 76.4258C56.9082 76.5039 57.002 76.543 57.0957 76.543Z" fill="#EDB120"/>
+      <path d="M99.8474 53.9028C100.386 47.0308 99.4968 40.1216 97.2372 33.6094C94.9775 27.0972 91.3957 21.1225 86.7168 16.0607C82.0378 10.9988 76.3628 6.9591 70.048 4.19523C63.7333 1.43136 56.9152 0.00305388 50.0221 4.89125e-06C43.129 -0.0030441 36.3097 1.41923 29.9925 4.17751C23.6753 6.93579 17.9967 10.9705 13.3133 16.0282C8.62982 21.0859 5.04277 27.0574 2.77736 33.5676C0.511958 40.0779 -0.382854 46.9862 0.149122 53.8587L35.1318 51.1509C34.9732 49.1011 35.2401 47.0407 35.9157 45.099C36.5914 43.1573 37.6612 41.3763 39.0581 39.8678C40.4549 38.3593 42.1486 37.156 44.0327 36.3333C45.9168 35.5107 47.9507 35.0865 50.0066 35.0874C52.0625 35.0883 54.096 35.5143 55.9794 36.3386C57.8628 37.1629 59.5554 38.3678 60.9509 39.8775C62.3464 41.3872 63.4147 43.1692 64.0886 45.1115C64.7626 47.0538 65.0276 49.1144 64.8671 51.164L99.8474 53.9028Z" fill="#EDB120"/>
+      </svg>
+  </div>
+
+  <!-- Page Liste -->
+  <div id="page-list" class="page">
+    <div class="container">
+      <div class="header">
+        <h2>Liste de courses</h2>
+        <button onclick="showPage('recap')" class="btn">Voir récap</button>
+      </div>
+      <input id="search" class="search-bar" placeholder="Rechercher un produit...">
+      <div id="catalog"></div>
+    </div>
+  </div>
+
+  <!-- Page Récap -->
+  <div id="page-recap" class="page recap">
+    <div class="container" style="position: relative;">
+      <div class="header-recap" style="text-align: center; position: relative;">
+        <!-- Flèche SVG -->
+        <span class="back-arrow" onclick="showPage('list')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M14 18L8 12L14 6L15.4 7.4L10.8 12L15.4 16.6L14 18Z" fill="#FDB52D"/>
+            </svg>
+        </span>
+        <h2>Récapitulatif</h2>
+      </div>
+      <div id="recap-content"></div>
+    </div>
+  </div>
+  
+
+  <!-- Page Live Course -->
+  <div id="page-live" class="page">
+    <div class="container">
+      <div class="header">
+        <h2>🔴 Live Course</h2>
+      </div>
+      <div id="live-content"></div>
+      <div style="margin-top:2rem;">
+        <button class="btn" style="width:100%;" onclick="finishLive()">Terminer les courses</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom bar -->
+  <div id="bottom-bar" class="bottom-bar" style="display:none;">
+    <div id="basket-count">0 article(s)</div>
+    <button class="btn" onclick="showPage('recap')">Voir</button>
+  </div>
+
+<script>
+const CATALOG = [
+  // 🥭 Fruits
+  { id: 1, name: "Pommes", category: "Fruits" },
+  { id: 2, name: "Bananes", category: "Fruits" },
+  { id: 3, name: "Poires", category: "Fruits" },
+  { id: 4, name: "Oranges", category: "Fruits" },
+  { id: 5, name: "Fraises", category: "Fruits" },
+  { id: 6, name: "Raisins", category: "Fruits" },
+  { id: 7, name: "Citron", category: "Fruits" },
+  { id: 8, name: "Pastèque", category: "Fruits" },
+  { id: 9, name: "Mangue", category: "Fruits" },
+  { id: 10, name: "Ananas", category: "Fruits" },
+
+  // 🥦 Légumes (30)
+  { id: 11, name: "Tomates", category: "Légumes" },
+  { id: 12, name: "Carottes", category: "Légumes" },
+  { id: 13, name: "Pommes de terre", category: "Légumes" },
+  { id: 14, name: "Courgettes", category: "Légumes" },
+  { id: 15, name: "Aubergines", category: "Légumes" },
+  { id: 16, name: "Poivrons", category: "Légumes" },
+  { id: 17, name: "Oignons", category: "Légumes" },
+  { id: 18, name: "Ail", category: "Légumes" },
+  { id: 19, name: "Salade", category: "Légumes" },
+  { id: 20, name: "Brocoli", category: "Légumes" },
+  { id: 21, name: "Haricots verts", category: "Légumes" },
+  { id: 22, name: "Champignons", category: "Légumes" },
+  { id: 23, name: "Épinards", category: "Légumes" },
+  { id: 24, name: "Petits pois", category: "Légumes" },
+  { id: 25, name: "Chou-fleur", category: "Légumes" },
+  { id: 26, name: "Chou rouge", category: "Légumes" },
+  { id: 27, name: "Chou vert", category: "Légumes" },
+  { id: 28, name: "Navets", category: "Légumes" },
+  { id: 29, name: "Radis", category: "Légumes" },
+  { id: 30, name: "Poireaux", category: "Légumes" },
+  { id: 31, name: "Céleri", category: "Légumes" },
+  { id: 32, name: "Betteraves", category: "Légumes" },
+  { id: 33, name: "Concombre", category: "Légumes" },
+  { id: 34, name: "Courge", category: "Légumes" },
+  { id: 35, name: "Potiron", category: "Légumes" },
+  { id: 36, name: "Fenouil", category: "Légumes" },
+  { id: 37, name: "Asperges", category: "Légumes" },
+  { id: 38, name: "Endives", category: "Légumes" },
+  { id: 39, name: "Topinambours", category: "Légumes" },
+  { id: 40, name: "Artichaut", category: "Légumes" },
+
+  // 🍞 Boulangerie
+  { id: 41, name: "Pain", category: "Boulangerie" },
+  { id: 42, name: "Baguette", category: "Boulangerie" },
+  { id: 43, name: "Croissant", category: "Boulangerie" },
+  { id: 44, name: "Brioche", category: "Boulangerie" },
+
+  // 🧀 Produits laitiers
+  { id: 45, name: "Lait", category: "Produits laitiers" },
+  { id: 46, name: "Fromage râpé", category: "Produits laitiers" },
+  { id: 47, name: "Yaourt nature", category: "Produits laitiers" },
+  { id: 48, name: "Beurre", category: "Produits laitiers" },
+  { id: 49, name: "Crème fraîche", category: "Produits laitiers" },
+
+  // 🍖 Viandes & Poissons
+  { id: 50, name: "Poulet", category: "Viandes & Poissons" },
+  { id: 51, name: "Bœuf haché", category: "Viandes & Poissons" },
+  { id: 52, name: "Steak", category: "Viandes & Poissons" },
+  { id: 53, name: "Jambon", category: "Viandes & Poissons" },
+  { id: 54, name: "Poisson blanc", category: "Viandes & Poissons" },
+  { id: 55, name: "Saumon", category: "Viandes & Poissons" },
+  { id: 56, name: "Thon en boîte", category: "Viandes & Poissons" },
+  { id: 57, name: "Lardons", category: "Viandes & Poissons" },
+  { id: 58, name: "Œufs", category: "Viandes & Poissons" },
+
+  // 🍝 Épicerie
+  { id: 59, name: "Pâtes", category: "Épicerie" },
+  { id: 60, name: "Riz", category: "Épicerie" },
+  { id: 61, name: "Farine", category: "Épicerie" },
+  { id: 62, name: "Sucre", category: "Épicerie" },
+  { id: 63, name: "Sel", category: "Épicerie" },
+  { id: 64, name: "Huile d’olive", category: "Épicerie" },
+  { id: 65, name: "Conserves de tomates", category: "Épicerie" },
+  { id: 66, name: "Pain de mie", category: "Épicerie" },
+  { id: 67, name: "Céréales", category: "Épicerie" },
+
+  // 🌶️ Épices (15)
+  { id: 68, name: "Poivre", category: "Épices" },
+  { id: 69, name: "Paprika", category: "Épices" },
+  { id: 70, name: "Curry", category: "Épices" },
+  { id: 71, name: "Cumin", category: "Épices" },
+  { id: 72, name: "Herbes de Provence", category: "Épices" },
+  { id: 73, name: "Piment doux", category: "Épices" },
+  { id: 74, name: "Curcuma", category: "Épices" },
+  { id: 75, name: "Gingembre", category: "Épices" },
+  { id: 76, name: "Cannelle", category: "Épices" },
+  { id: 77, name: "Noix de muscade", category: "Épices" },
+  { id: 78, name: "Coriandre", category: "Épices" },
+  { id: 79, name: "Aneth", category: "Épices" },
+  { id: 80, name: "Basilic", category: "Épices" },
+  { id: 81, name: "Thym", category: "Épices" },
+  { id: 82, name: "Romarin", category: "Épices" },
+
+  // 🧂 Condiments & Sauces
+  { id: 83, name: "Ketchup", category: "Condiments & Sauces" },
+  { id: 84, name: "Moutarde", category: "Condiments & Sauces" },
+  { id: 85, name: "Mayonnaise", category: "Condiments & Sauces" },
+  { id: 86, name: "Sauce soja", category: "Condiments & Sauces" },
+  { id: 87, name: "Vinaigre balsamique", category: "Condiments & Sauces" },
+  { id: 88, name: "Cornichons", category: "Condiments & Sauces" },
+  { id: 89, name: "Sauce barbecue", category: "Condiments & Sauces" },
+
+  // 🧴 Produits ménagers
+  { id: 90, name: "Liquide vaisselle", category: "Produits ménagers" },
+  { id: 91, name: "Lessive", category: "Produits ménagers" },
+  { id: 92, name: "Éponge", category: "Produits ménagers" },
+  { id: 93, name: "Essuie-tout", category: "Produits ménagers" },
+  { id: 94, name: "Sacs poubelle", category: "Produits ménagers" },
+  { id: 95, name: "Nettoyant multi-usage", category: "Produits ménagers" },
+  { id: 96, name: "Désodorisant", category: "Produits ménagers" },
+  { id: 97, name: "Papier toilette", category: "Produits ménagers" },
+
+  // 🥤 Boissons
+  { id: 98, name: "Eau minérale", category: "Boissons" },
+  { id: 99, name: "Jus d’orange", category: "Boissons" },
+  { id: 100, name: "Café", category: "Boissons" },
+  { id: 101, name: "Thé", category: "Boissons" },
+  { id: 102, name: "Limonade", category: "Boissons" },
+  { id: 103, name: "Coca-Cola", category: "Boissons" },
+  { id: 104, name: "Bière", category: "Boissons" },
+  { id: 105, name: "Vin rouge", category: "Boissons" },
+  { id: 106, name: "Vin blanc", category: "Boissons" },
+
+  //  Autres
+  { id: 107, name: "Autre - voir messenger", category: "Autre" }
+];
+
+let basket = [];
+
+const CATEGORY_ICONS = {
+  "Fruits": "🍎",
+  "Légumes": "🥕",
+  "Boulangerie": "🥐",
+  "Produits laitiers": "🧀",
+  "Viandes & Poissons": "🍖",
+  "Épicerie": "🍝",
+  "Épices": "🌶️",
+  "Condiments & Sauces": "🧂",
+  "Produits ménagers": "🧴",
+  "Boissons": "🥤",
+  "Autre": "?"
+};
+
+// Navigation
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    p.style.opacity = 0;
+  });
+  setTimeout(() => {
+    const newPage = document.getElementById('page-' + page);
+    newPage.classList.add('active');
+    setTimeout(() => newPage.style.opacity = 1, 50);
+  }, 150);
+
+  if (page === 'list') renderCatalog();
+  if (page === 'recap') renderRecap();
+  if (page === 'live') renderLive();
+
+  document.getElementById('bottom-bar').style.display = basket.length ? 'flex' : 'none';
+}
+
+// Welcome timer
+setTimeout(() => {
+  document.getElementById('page-welcome').classList.remove('active');
+  showPage('list');
+}, 3000);
+
+// Catalogue
+function renderCatalog(){
+  const q = document.getElementById('search').value.toLowerCase();
+  const filtered = CATALOG.filter(p => p.name.toLowerCase().includes(q));
+  const container = document.getElementById('catalog');
+  container.innerHTML = "";
+  filtered.forEach(prod => {
+    const found = basket.find(p => p.id === prod.id);
+    const div = document.createElement('div');
+    div.className = "product-card";
+    div.innerHTML = `
+      <div><strong>${prod.name}</strong> <small>(${prod.category})</small></div>
+      <div class="product-actions">
+        ${found ? `
+          <button class="qty-btn" onclick="changeQty(${prod.id},-1)">-</button>
+          <span class="qty-num">${found.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${prod.id},1)">+</button>
+        ` : `
+          <button class="btn" onclick="addToBasket(${prod.id})">Ajouter</button>
+        `}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+
+// Ajouter
+function addToBasket(id){
+  const prod = CATALOG.find(p => p.id === id);
+  const found = basket.find(p => p.id === id);
+  if(found){ found.qty += 1; }
+  else { basket.push({ ...prod, qty:1 }); }
+  updateBasketCount();
+  renderCatalog();
+}
+
+// Modifier quantités
+function changeQty(id, delta){
+  const item = basket.find(p => p.id === id);
+  if(!item) return;
+  item.qty += delta;
+  if(item.qty <= 0) basket = basket.filter(p=>p.id!==id);
+  updateBasketCount();
+  renderCatalog();
+  renderRecap();
+}
+
+// Récapitulatif
+function renderRecap(){
+  const container = document.getElementById('recap-content');
+  container.innerHTML = "";
+  const grouped = {};
+  basket.forEach(item=>{
+    if(!grouped[item.category]) grouped[item.category]=[];
+    grouped[item.category].push(item);
+  });
+
+  for(const cat in grouped){
+    const div = document.createElement('div');
+    div.className="category";
+    div.innerHTML = `<h3>${CATEGORY_ICONS[cat] || ""} ${cat}</h3>`;
+    grouped[cat].forEach(item=>{
+      const row = document.createElement('div');
+      row.className = "recap-row";
+      row.innerHTML = `
+        <div>${item.name}</div>
+        <div class="recap-actions">
+          <button class="recap" onclick="changeQty(${item.id},-1)">-</button>
+          <span class="qty-num">${item.qty}</span>
+          <button class="recap" onclick="changeQty(${item.id},1)">+</button>
+        </div>
+      `;
+      div.appendChild(row);
+    });
+    container.appendChild(div);
+  }
+
+  // Bouton unique “commencer les courses”
+  let liveBtn = document.getElementById('start-live-btn');
+  if(!liveBtn){
+    liveBtn = document.createElement('button');
+    liveBtn.id = "start-live-btn";
+    liveBtn.className = "btn btn-live";
+    liveBtn.textContent = "🔴 Commencer les courses";
+    liveBtn.onclick = startLive;
+    container.appendChild(liveBtn);
+  }
+}
+
+// Page live
+function startLive(){ showPage('live'); }
+function renderLive(){
+  const container = document.getElementById('live-content');
+  container.innerHTML = "";
+  const grouped = {};
+  basket.forEach(item=>{
+    if(!grouped[item.category]) grouped[item.category]=[];
+    grouped[item.category].push({...item, checked:false});
+  });
+  for(const cat in grouped){
+    const div = document.createElement('div');
+    div.className = "category";
+    div.innerHTML = `<h3>${CATEGORY_ICONS[cat] || ""} ${cat}</h3>`;
+    grouped[cat].forEach(item=>{
+      const row = document.createElement('div');
+      row.className = "live-item";
+      row.innerHTML = `
+        <div class="live-left">
+          <input type="checkbox" onchange="toggleCheck(this, ${item.id})">
+          <span id="name-${item.id}">${item.name}</span>
+        </div>
+        <div>${item.qty}</div>`;
+      div.appendChild(row);
+    });
+    container.appendChild(div);
+  }
+}
+
+function toggleCheck(checkbox, id){
+  const el = document.getElementById('name-'+id);
+  if(checkbox.checked){ el.classList.add('checked'); }
+  else { el.classList.remove('checked'); }
+}
+
+// Terminer les courses
+function finishLive(){
+  document.querySelectorAll('#live-content input[type="checkbox"]').forEach(chk=>{
+    const id = parseInt(chk.getAttribute('onchange').match(/\d+/)[0]);
+    if(chk.checked) basket = basket.filter(p=>p.id!==id);
+  });
+  updateBasketCount();
+  showPage('list');
+}
+
+// Panier compteur
+function updateBasketCount(){
+  document.getElementById('basket-count').textContent =
+    basket.reduce((s,i)=>s+i.qty,0)+" article(s)";
+  document.getElementById('bottom-bar').style.display = basket.length ? 'flex' : 'none';
+}
+
+setTimeout(() => {
+  showPage('list'); 
+  const welcome = document.getElementById('page-welcome');
+  if(welcome) welcome.style.display = 'none';
+}, 3000);
+
+// Recherche dynamique
+document.getElementById('search').addEventListener('input', renderCatalog);
+
+// Init
+renderCatalog();
+</script>
+
+</body>
+</html>
