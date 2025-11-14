@@ -44,14 +44,11 @@
   
     /* Carte produit */
     .product-card {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       padding: 1rem;
-      margin: 0.5rem 0;
-      border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+      margin: 0.8rem 0;
     }
   
     .product-card button.btn {
@@ -116,8 +113,9 @@
 
     /* Ligne dans récap / live */
     .recap-row, .live-item {
-      display: flex;
-      justify-content: space-between;
+      /* display: flex; */
+      display: block;
+      /* justify-content: space-between; */
       align-items: center;
       margin: 0.25rem 0;
     }
@@ -129,8 +127,8 @@
   
     /* Boutons + / - unifiés */
     button.qty-btn, button.recap {
-      width: 36px;
-      height: 36px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       border: 2px solid #FEDA96;
       background: #FEDA96;
@@ -147,6 +145,11 @@
     button.qty-btn:active, button.recap:active {
       transform: scale(0.95);
       background: #FDB52D;
+    }
+
+    .product-actions {
+      display: flex;
+      align-items: center;
     }
 
     /* Numéro de quantité */
@@ -186,6 +189,10 @@
       opacity: 0.5;
     }
   
+    #bottom-bar {
+      display: none;
+    }
+
     /* Bottom bar */
     .bottom-bar {
       position: fixed;
@@ -207,9 +214,12 @@
       color: #FEDA96;
     }
 
-    /* Espacement checkbox nom */
-    .live-left span {
-      margin-left: 0.5rem;
+    .live-left {
+      display: flex;
+    }
+
+    .qty-live{
+      margin: 0px 0.5rem;
     }
 
     /* Header récap : titre centré */
@@ -234,6 +244,45 @@
       text-align: center;
     }
 
+    .details-btn, .details-view-btn {
+      color: #FDB52D;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: underline;
+      display: inline-block;
+      /* margin-top: 0.4rem; */
+    }
+
+    .details-input {
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .details-input textarea {
+      width: 100%;
+      min-height: 60px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+
+    .product-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .live-details {
+      background: #fff7e0;
+      border-left: 4px solid #FDB52D;
+      margin: 0.5rem 0 1rem 0;
+      padding: 0.5rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      display: none;
+    }
 
   </style>
   
@@ -426,7 +475,7 @@ const CATALOG = [
   { id: 106, name: "Vin blanc", category: "Boissons" },
 
   //  Autres
-  { id: 107, name: "Autre - voir messenger", category: "Autre" }
+  { id: 107, name: "Autre - voir détails", category: "Autre" }
 ];
 
 let basket = [];
@@ -451,6 +500,7 @@ function showPage(page) {
     p.classList.remove('active');
     p.style.opacity = 0;
   });
+
   setTimeout(() => {
     const newPage = document.getElementById('page-' + page);
     newPage.classList.add('active');
@@ -461,8 +511,11 @@ function showPage(page) {
   if (page === 'recap') renderRecap();
   if (page === 'live') renderLive();
 
-  document.getElementById('bottom-bar').style.display = basket.length ? 'flex' : 'none';
+  // 🔥 affiche la bottom bar uniquement sur la page list
+  const bottomBar = document.getElementById('bottom-bar');
+  bottomBar.style.display = (page === 'list' && basket.length) ? 'flex' : 'none';
 }
+
 
 // Welcome timer
 setTimeout(() => {
@@ -481,6 +534,7 @@ function renderCatalog(){
     const div = document.createElement('div');
     div.className = "product-card";
     div.innerHTML = `
+    <div class="product-header">
       <div><strong>${prod.name}</strong> <small>(${prod.category})</small></div>
       <div class="product-actions">
         ${found ? `
@@ -491,11 +545,77 @@ function renderCatalog(){
           <button class="btn" onclick="addToBasket(${prod.id})">Ajouter</button>
         `}
       </div>
+    </div>
+    <span class="details-btn" onclick="toggleDetailsInput('${prod.id}')">Détails</span>
+    <div id="details-input-${prod.id}" class="details-input">
+      <textarea id="textarea-${prod.id}" maxlength="600" placeholder="Ajoutez des précisions (max 100 mots)...">${getDetails(prod)}</textarea>
+      <button class="btn" onclick="saveDetails('${prod.id}')">Valider</button>
+    </div>
     `;
     container.appendChild(div);
   });
 }
 
+// ---------------   freshly added
+function toggleDetailsInput(id) {
+      const div = document.getElementById(`details-input-${id}`);
+      div.style.display = div.style.display === "none" || div.style.display === "" ? "block" : "none";
+    }
+
+function toggleDetailsInputRecap(id) {
+  const div = document.getElementById(`details-input-recap-${id}`);
+  div.style.display = div.style.display === "none" || div.style.display === "" ? "block" : "none";
+}
+
+function getDetails(item) {
+  return localStorage.getItem(`details_${item}`) || "";
+}
+
+function saveDetails(id) {
+      const text = document.getElementById(`textarea-${id}`).value.trim();
+      const words = text.split(/\s+/).filter(Boolean);
+      if (words.length > 100) {
+        alert("Veuillez ne pas dépasser 100 mots !"); //to remove
+        return;
+      }
+      localStorage.setItem(`details_${id}`, text);
+      document.getElementById(`details-input-${id}`).style.display = "none";
+      //renderLive();
+    }
+  
+function saveDetailsRecap(id) {
+  const text = document.getElementById(`textarea-recap-${id}`).value.trim();
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length > 100) {
+    alert("Veuillez ne pas dépasser 100 mots !"); //to remove
+    return;
+  }
+  localStorage.setItem(`details_${id}`, text);
+  document.getElementById(`details-input-recap-${id}`).style.display = "none";
+  //renderLive();
+}
+
+function toggleDetailsViewLive(id) {
+  const div = document.getElementById(`live-details-${id}`);
+  if (div.style.display === "none" || div.style.display === "") {
+    const text = getDetails(id);
+    div.innerText = text ? text : "Aucun détail enregistré.";
+    div.style.display = "block";
+  } else {
+    div.style.display = "none";
+  }
+}
+
+function toggleDetailsViewRecap(id) {
+  const div = document.getElementById(`recap-details-${id}`);
+  if (div.style.display === "none" || div.style.display === "") {
+    const text = getDetails(id);
+    div.innerText = text ? text : "Aucun détail enregistré.";
+    div.style.display = "block";
+  } else {
+    div.style.display = "none";
+  }
+}
 
 // Ajouter
 function addToBasket(id){
@@ -536,14 +656,26 @@ function renderRecap(){
       const row = document.createElement('div');
       row.className = "recap-row";
       row.innerHTML = `
-        <div>${item.name}</div>
-        <div class="recap-actions">
-          <button class="recap" onclick="changeQty(${item.id},-1)">-</button>
-          <span class="qty-num">${item.qty}</span>
-          <button class="recap" onclick="changeQty(${item.id},1)">+</button>
+        <div class="product-header">
+          <div>${item.name}</div>
+          <div class="recap-actions">
+            <button class="recap" onclick="changeQty(${item.id},-1)">-</button>
+            <span class="qty-num">${item.qty}</span>
+            <button class="recap" onclick="changeQty(${item.id},1)">+</button>
+          </div>
+        </div>
+        <span class="details-btn" onclick="toggleDetailsInputRecap('${item.id}')">Détails</span>
+        <div id="details-input-recap-${item.id}" class="details-input">
+          <textarea id="textarea-recap-${item.id}" maxlength="600" placeholder="Ajoutez des précisions (max 100 mots)...">${getDetails(item)}</textarea>
+          <button class="btn" onclick="saveDetailsRecap('${item.id}')">Valider</button>
         </div>
       `;
+      const detailsDivRecap = document.createElement("div");
+      detailsDivRecap.id = `recap-details-${item.id}`;
+      detailsDivRecap.className = "live-details";
+
       div.appendChild(row);
+      div.appendChild(detailsDivRecap);
     });
     container.appendChild(div);
   }
@@ -566,28 +698,50 @@ function renderLive(){
   const container = document.getElementById('live-content');
   container.innerHTML = "";
   const grouped = {};
-  basket.forEach(item=>{
-    if(!grouped[item.category]) grouped[item.category]=[];
-    grouped[item.category].push({...item, checked:false});
+
+  basket.forEach(item => {
+    if (!grouped[item.category]) grouped[item.category] = [];
+    grouped[item.category].push({ ...item, checked: false });
   });
-  for(const cat in grouped){
+
+  for (const cat in grouped) {
     const div = document.createElement('div');
     div.className = "category";
     div.innerHTML = `<h3>${CATEGORY_ICONS[cat] || ""} ${cat}</h3>`;
-    grouped[cat].forEach(item=>{
+
+    grouped[cat].forEach(item => {
+
+      const details = getDetails(item.id);
+      const hasDetails = details && details.trim().length > 0;
+console.log(hasDetails)
       const row = document.createElement('div');
       row.className = "live-item";
+
       row.innerHTML = `
+      <div class="product-header">
         <div class="live-left">
           <input type="checkbox" onchange="toggleCheck(this, ${item.id})">
+          <div class="qty-live">${item.qty}</div>
           <span id="name-${item.id}">${item.name}</span>
         </div>
-        <div>${item.qty}</div>`;
+
+        ${hasDetails 
+            ? `<span class="details-view-btn" onclick="toggleDetailsViewLive('${item.id}')">Détails</span>`
+            : ``}
+      </div>`;
+
+      const detailsDiv = document.createElement("div");
+      detailsDiv.id = `live-details-${item.id}`;
+      detailsDiv.className = "live-details";
+
       div.appendChild(row);
+      div.appendChild(detailsDiv);
     });
+
     container.appendChild(div);
   }
 }
+
 
 function toggleCheck(checkbox, id){
   const el = document.getElementById('name-'+id);
