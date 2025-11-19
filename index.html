@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mes Courses</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mes Courses avec Firebase</title>
   <style>
     
     body {
@@ -209,16 +209,18 @@
     }
 
     /* Live qty jaune bold */
-    .live-item div:last-child {
+    /* .live-item div:last-child {
       font-weight: bold;
       color: #FEDA96;
-    }
+    } */
 
     .live-left {
       display: flex;
     }
 
     .qty-live{
+      font-weight: bold;
+      color: #FEDA96;
       margin: 0px 0.5rem;
     }
 
@@ -236,7 +238,7 @@
       left: 0;
     }
 
-    /* Container pour bouton “commencer les courses” */
+    
     #start-live-btn {
       display: block;
       margin-top: 1rem;
@@ -285,7 +287,6 @@
     }
 
   </style>
-  
 </head>
 <body>
 
@@ -298,20 +299,18 @@
       </svg>
   </div>
 
-  <!-- Page Liste -->
   <div id="page-list" class="page">
     <div class="container">
       <div class="header">
         <h2>Liste de courses</h2>
-        <button onclick="showPage('recap')" class="btn">Voir récap</button>
+        <button class="btn" onclick="showPage('recap')">Voir récap</button>
       </div>
-      <input id="search" class="search-bar" placeholder="Rechercher un produit...">
+      <input id="search" class="search-bar" placeholder="Rechercher un produit..." />
       <div id="catalog"></div>
     </div>
   </div>
 
-  <!-- Page Récap -->
-  <div id="page-recap" class="page recap">
+  <div id="page-recap" class="page">
     <div class="container" style="position: relative;">
       <div class="header-recap" style="text-align: center; position: relative;">
         <!-- Flèche SVG -->
@@ -325,459 +324,543 @@
       <div id="recap-content"></div>
     </div>
   </div>
-  
 
-  <!-- Page Live Course -->
   <div id="page-live" class="page">
     <div class="container">
-      <div class="header">
-        <h2>🔴 Live Course</h2>
-      </div>
+      <h2>🔴 Live Course</h2>
       <div id="live-content"></div>
-      <div style="margin-top:2rem;">
-        <button class="btn" style="width:100%;" onclick="finishLive()">Terminer les courses</button>
-      </div>
+      <button class="btn" style="width:100%; margin-top:2rem;" onclick="finishLive()">Terminer les courses</button>
     </div>
   </div>
 
-  <!-- Bottom bar -->
-  <div id="bottom-bar" class="bottom-bar" style="display:none;">
+  <div id="bottom-bar" class="bottom-bar">
     <div id="basket-count">0 article(s)</div>
     <button class="btn" onclick="showPage('recap')">Voir</button>
   </div>
 
-<script>
-const CATALOG = [
-  // 🥭 Fruits
-  { id: 1, name: "Pommes", category: "Fruits" },
-  { id: 2, name: "Bananes", category: "Fruits" },
-  { id: 3, name: "Poires", category: "Fruits" },
-  { id: 4, name: "Oranges", category: "Fruits" },
-  { id: 5, name: "Fraises", category: "Fruits" },
-  { id: 6, name: "Raisins", category: "Fruits" },
-  { id: 7, name: "Citron", category: "Fruits" },
-  { id: 8, name: "Pastèque", category: "Fruits" },
-  { id: 9, name: "Mangue", category: "Fruits" },
-  { id: 10, name: "Ananas", category: "Fruits" },
+  <!-- Firebase + App JS -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // 🥦 Légumes (30)
-  { id: 11, name: "Tomates", category: "Légumes" },
-  { id: 12, name: "Carottes", category: "Légumes" },
-  { id: 13, name: "Pommes de terre", category: "Légumes" },
-  { id: 14, name: "Courgettes", category: "Légumes" },
-  { id: 15, name: "Aubergines", category: "Légumes" },
-  { id: 16, name: "Poivrons", category: "Légumes" },
-  { id: 17, name: "Oignons", category: "Légumes" },
-  { id: 18, name: "Ail", category: "Légumes" },
-  { id: 19, name: "Salade", category: "Légumes" },
-  { id: 20, name: "Brocoli", category: "Légumes" },
-  { id: 21, name: "Haricots verts", category: "Légumes" },
-  { id: 22, name: "Champignons", category: "Légumes" },
-  { id: 23, name: "Épinards", category: "Légumes" },
-  { id: 24, name: "Petits pois", category: "Légumes" },
-  { id: 25, name: "Chou-fleur", category: "Légumes" },
-  { id: 26, name: "Chou rouge", category: "Légumes" },
-  { id: 27, name: "Chou vert", category: "Légumes" },
-  { id: 28, name: "Navets", category: "Légumes" },
-  { id: 29, name: "Radis", category: "Légumes" },
-  { id: 30, name: "Poireaux", category: "Légumes" },
-  { id: 31, name: "Céleri", category: "Légumes" },
-  { id: 32, name: "Betteraves", category: "Légumes" },
-  { id: 33, name: "Concombre", category: "Légumes" },
-  { id: 34, name: "Courge", category: "Légumes" },
-  { id: 35, name: "Potiron", category: "Légumes" },
-  { id: 36, name: "Fenouil", category: "Légumes" },
-  { id: 37, name: "Asperges", category: "Légumes" },
-  { id: 38, name: "Endives", category: "Légumes" },
-  { id: 39, name: "Topinambours", category: "Légumes" },
-  { id: 40, name: "Artichaut", category: "Légumes" },
+    // --- CONFIG FIREBASE ---
+    const firebaseConfig = {
+    apiKey: "AIzaSyCdLHkL6Sk2blHJM8vLF6S2PJ-6NaJSB4k",
+    authDomain: "fdb-shop.firebaseapp.com",
+    projectId: "fdb-shop",
+    storageBucket: "fdb-shop.firebasestorage.app",
+    messagingSenderId: "736291317119",
+    appId: "1:736291317119:web:9114d7636de2f0b350664a"
+  };
 
-  // 🍞 Boulangerie
-  { id: 41, name: "Pain", category: "Boulangerie" },
-  { id: 42, name: "Baguette", category: "Boulangerie" },
-  { id: 43, name: "Croissant", category: "Boulangerie" },
-  { id: 44, name: "Brioche", category: "Boulangerie" },
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  // 🧀 Produits laitiers
-  { id: 45, name: "Lait", category: "Produits laitiers" },
-  { id: 46, name: "Fromage râpé", category: "Produits laitiers" },
-  { id: 47, name: "Yaourt nature", category: "Produits laitiers" },
-  { id: 48, name: "Beurre", category: "Produits laitiers" },
-  { id: 49, name: "Crème fraîche", category: "Produits laitiers" },
+    // --- COLLECTION FIRESTORE ---
+    const itemsCol = collection(db, "items");
 
-  // 🍖 Viandes & Poissons
-  { id: 50, name: "Poulet", category: "Viandes & Poissons" },
-  { id: 51, name: "Bœuf haché", category: "Viandes & Poissons" },
-  { id: 52, name: "Steak", category: "Viandes & Poissons" },
-  { id: 53, name: "Jambon", category: "Viandes & Poissons" },
-  { id: 54, name: "Poisson blanc", category: "Viandes & Poissons" },
-  { id: 55, name: "Saumon", category: "Viandes & Poissons" },
-  { id: 56, name: "Thon en boîte", category: "Viandes & Poissons" },
-  { id: 57, name: "Lardons", category: "Viandes & Poissons" },
-  { id: 58, name: "Œufs", category: "Viandes & Poissons" },
+    // --- ETAT LOCAL (mais sync avec Firestore) ---
+    let basket = [];
 
-  // 🍝 Épicerie
-  { id: 59, name: "Pâtes", category: "Épicerie" },
-  { id: 60, name: "Riz", category: "Épicerie" },
-  { id: 61, name: "Farine", category: "Épicerie" },
-  { id: 62, name: "Sucre", category: "Épicerie" },
-  { id: 63, name: "Sel", category: "Épicerie" },
-  { id: 64, name: "Huile d’olive", category: "Épicerie" },
-  { id: 65, name: "Conserves de tomates", category: "Épicerie" },
-  { id: 66, name: "Pain de mie", category: "Épicerie" },
-  { id: 67, name: "Céréales", category: "Épicerie" },
+    const CATALOG = [
+    // 🥭 Fruits
+    { id: 1, name: "Pommes", category: "Fruits" },
+    { id: 2, name: "Bananes", category: "Fruits" },
+    { id: 3, name: "Poires", category: "Fruits" },
+    { id: 4, name: "Oranges", category: "Fruits" },
+    { id: 5, name: "Fraises", category: "Fruits" },
+    { id: 6, name: "Raisins", category: "Fruits" },
+    { id: 7, name: "Citron", category: "Fruits" },
+    { id: 8, name: "Pastèque", category: "Fruits" },
+    { id: 9, name: "Mangue", category: "Fruits" },
+    { id: 10, name: "Ananas", category: "Fruits" },
+    { id: 11, name: "Pêches", category: "Fruits" },
+    { id: 12, name: "Abricots", category: "Fruits" },
+    { id: 13, name: "Myrtilles", category: "Fruits" },
 
-  // 🌶️ Épices (15)
-  { id: 68, name: "Poivre", category: "Épices" },
-  { id: 69, name: "Paprika", category: "Épices" },
-  { id: 70, name: "Curry", category: "Épices" },
-  { id: 71, name: "Cumin", category: "Épices" },
-  { id: 72, name: "Herbes de Provence", category: "Épices" },
-  { id: 73, name: "Piment doux", category: "Épices" },
-  { id: 74, name: "Curcuma", category: "Épices" },
-  { id: 75, name: "Gingembre", category: "Épices" },
-  { id: 76, name: "Cannelle", category: "Épices" },
-  { id: 77, name: "Noix de muscade", category: "Épices" },
-  { id: 78, name: "Coriandre", category: "Épices" },
-  { id: 79, name: "Aneth", category: "Épices" },
-  { id: 80, name: "Basilic", category: "Épices" },
-  { id: 81, name: "Thym", category: "Épices" },
-  { id: 82, name: "Romarin", category: "Épices" },
+    // 🥦 Légumes
+    { id: 14, name: "Tomates", category: "Légumes" },
+    { id: 15, name: "Carottes", category: "Légumes" },
+    { id: 16, name: "Pommes de terre", category: "Légumes" },
+    { id: 17, name: "Courgettes", category: "Légumes" },
+    { id: 18, name: "Aubergines", category: "Légumes" },
+    { id: 19, name: "Poivrons", category: "Légumes" },
+    { id: 20, name: "Oignons", category: "Légumes" },
+    { id: 21, name: "Ail", category: "Légumes" },
+    { id: 22, name: "Salade", category: "Légumes" },
+    { id: 23, name: "Brocoli", category: "Légumes" },
+    { id: 24, name: "Haricots verts", category: "Légumes" },
+    { id: 25, name: "Champignons", category: "Légumes" },
+    { id: 26, name: "Épinards", category: "Légumes" },
+    { id: 27, name: "Petits pois", category: "Légumes" },
+    { id: 28, name: "Chou-fleur", category: "Légumes" },
+    { id: 29, name: "Chou rouge", category: "Légumes" },
+    { id: 30, name: "Chou vert", category: "Légumes" },
+    { id: 31, name: "Navets", category: "Légumes" },
+    { id: 32, name: "Radis", category: "Légumes" },
+    { id: 33, name: "Poireaux", category: "Légumes" },
+    { id: 34, name: "Céleri", category: "Légumes" },
+    { id: 35, name: "Betteraves", category: "Légumes" },
+    { id: 36, name: "Concombre", category: "Légumes" },
+    { id: 37, name: "Courge", category: "Légumes" },
+    { id: 38, name: "Potiron", category: "Légumes" },
+    { id: 39, name: "Fenouil", category: "Légumes" },
+    { id: 40, name: "Asperges", category: "Légumes" },
+    { id: 41, name: "Endives", category: "Légumes" },
+    { id: 42, name: "Topinambours", category: "Légumes" },
+    { id: 43, name: "Artichaut", category: "Légumes" },
+    { id: 44, name: "Patate douce", category: "Légumes" },
+    { id: 45, name: "Poivrons rouges", category: "Légumes" },
 
-  // 🧂 Condiments & Sauces
-  { id: 83, name: "Ketchup", category: "Condiments & Sauces" },
-  { id: 84, name: "Moutarde", category: "Condiments & Sauces" },
-  { id: 85, name: "Mayonnaise", category: "Condiments & Sauces" },
-  { id: 86, name: "Sauce soja", category: "Condiments & Sauces" },
-  { id: 87, name: "Vinaigre balsamique", category: "Condiments & Sauces" },
-  { id: 88, name: "Cornichons", category: "Condiments & Sauces" },
-  { id: 89, name: "Sauce barbecue", category: "Condiments & Sauces" },
+    // 🍞 Boulangerie
+    { id: 46, name: "Pain", category: "Boulangerie" },
+    { id: 47, name: "Baguette", category: "Boulangerie" },
+    { id: 48, name: "Croissant", category: "Boulangerie" },
+    { id: 49, name: "Brioche", category: "Boulangerie" },
+    { id: 50, name: "Pain complet", category: "Boulangerie" },
+    { id: 51, name: "Pain aux céréales", category: "Boulangerie" },
+    { id: 52, name: "Pain de campagne", category: "Boulangerie" },
+    { id: 53, name: "Pain de mie", category: "Boulangerie" },
+    { id: 54, name: "Biscotte", category: "Boulangerie" },
+    { id: 55, name: "Pain burger", category: "Boulangerie" },
 
-  // 🧴 Produits ménagers
-  { id: 90, name: "Liquide vaisselle", category: "Produits ménagers" },
-  { id: 91, name: "Lessive", category: "Produits ménagers" },
-  { id: 92, name: "Éponge", category: "Produits ménagers" },
-  { id: 93, name: "Essuie-tout", category: "Produits ménagers" },
-  { id: 94, name: "Sacs poubelle", category: "Produits ménagers" },
-  { id: 95, name: "Nettoyant multi-usage", category: "Produits ménagers" },
-  { id: 96, name: "Désodorisant", category: "Produits ménagers" },
-  { id: 97, name: "Papier toilette", category: "Produits ménagers" },
+    // 🧀 Produits laitiers (avec nouveaux fromages)
+    { id: 56, name: "Lait", category: "Produits laitiers" },
+    { id: 57, name: "Fromage râpé", category: "Produits laitiers" },
+    { id: 58, name: "Yaourt nature", category: "Produits laitiers" },
+    { id: 59, name: "Beurre", category: "Produits laitiers" },
+    { id: 60, name: "Crème fraîche", category: "Produits laitiers" },
+    { id: 61, name: "Cheddar", category: "Produits laitiers" },
+    { id: 62, name: "Mozzarella", category: "Produits laitiers" },
+    { id: 63, name: "Camembert", category: "Produits laitiers" },
+    { id: 64, name: "Brie", category: "Produits laitiers" },
+    { id: 65, name: "Chèvre", category: "Produits laitiers" },
+    { id: 66, name: "Feta", category: "Produits laitiers" },
+    { id: 67, name: "Gouda", category: "Produits laitiers" },
+    { id: 68, name: "Parmesan", category: "Produits laitiers" },
+    { id: 69, name: "Mont d’Or", category: "Produits laitiers" },
+    { id: 70, name: "Reblochon", category: "Produits laitiers" },
+    { id: 71, name: "Comté", category: "Produits laitiers" },
+    { id: 72, name: "Morbier", category: "Produits laitiers" },
 
-  // 🥤 Boissons
-  { id: 98, name: "Eau minérale", category: "Boissons" },
-  { id: 99, name: "Jus d’orange", category: "Boissons" },
-  { id: 100, name: "Café", category: "Boissons" },
-  { id: 101, name: "Thé", category: "Boissons" },
-  { id: 102, name: "Limonade", category: "Boissons" },
-  { id: 103, name: "Coca-Cola", category: "Boissons" },
-  { id: 104, name: "Bière", category: "Boissons" },
-  { id: 105, name: "Vin rouge", category: "Boissons" },
-  { id: 106, name: "Vin blanc", category: "Boissons" },
+    // 🍖 Viandes & Poissons
+    { id: 73, name: "Poulet", category: "Viandes & Poissons" },
+    { id: 74, name: "Bœuf haché", category: "Viandes & Poissons" },
+    { id: 75, name: "Steak", category: "Viandes & Poissons" },
+    { id: 76, name: "Jambon", category: "Viandes & Poissons" },
+    { id: 77, name: "Poisson blanc", category: "Viandes & Poissons" },
+    { id: 78, name: "Saumon", category: "Viandes & Poissons" },
+    { id: 79, name: "Thon en boîte", category: "Viandes & Poissons" },
+    { id: 80, name: "Lardons", category: "Viandes & Poissons" },
+    { id: 81, name: "Œufs", category: "Viandes & Poissons" },
+    { id: 82, name: "Dinde", category: "Viandes & Poissons" },
+    { id: 83, name: "Saucisses", category: "Viandes & Poissons" },
 
-  //  Autres
-  { id: 107, name: "Autre - voir détails", category: "Autre" }
-];
+    // 🍝 Épicerie
+    { id: 84, name: "Pâtes", category: "Épicerie" },
+    { id: 85, name: "Riz", category: "Épicerie" },
+    { id: 86, name: "Farine", category: "Épicerie" },
+    { id: 87, name: "Sucre", category: "Épicerie" },
+    { id: 88, name: "Sel", category: "Épicerie" },
+    { id: 89, name: "Huile d’olive", category: "Épicerie" },
+    { id: 90, name: "Conserves de tomates", category: "Épicerie" },
+    { id: 91, name: "Pain de mie", category: "Épicerie" },
+    { id: 92, name: "Céréales", category: "Épicerie" },
+    { id: 93, name: "Semoule", category: "Épicerie" },
+    { id: 94, name: "Lentilles", category: "Épicerie" },
+    { id: 95, name: "Pois chiches", category: "Épicerie" },
 
-let basket = [];
+    // 🌶️ Épices (inchangé, 15 éléments)
+    { id: 96, name: "Poivre", category: "Épices" },
+    { id: 97, name: "Paprika", category: "Épices" },
+    { id: 98, name: "Curry", category: "Épices" },
+    { id: 99, name: "Cumin", category: "Épices" },
+    { id: 100, name: "Herbes de Provence", category: "Épices" },
+    { id: 101, name: "Piment doux", category: "Épices" },
+    { id: 102, name: "Curcuma", category: "Épices" },
+    { id: 103, name: "Gingembre", category: "Épices" },
+    { id: 104, name: "Cannelle", category: "Épices" },
+    { id: 105, name: "Noix de muscade", category: "Épices" },
+    { id: 106, name: "Coriandre", category: "Épices" },
+    { id: 107, name: "Aneth", category: "Épices" },
+    { id: 108, name: "Basilic", category: "Épices" },
+    { id: 109, name: "Thym", category: "Épices" },
+    { id: 110, name: "Romarin", category: "Épices" },
 
-const CATEGORY_ICONS = {
-  "Fruits": "🍎",
-  "Légumes": "🥕",
-  "Boulangerie": "🥐",
-  "Produits laitiers": "🧀",
-  "Viandes & Poissons": "🍖",
-  "Épicerie": "🍝",
-  "Épices": "🌶️",
-  "Condiments & Sauces": "🧂",
-  "Produits ménagers": "🧴",
-  "Boissons": "🥤",
-  "Autre": "?"
-};
+    // 🧂 Condiments & Sauces
+    { id: 111, name: "Ketchup", category: "Condiments & Sauces" },
+    { id: 112, name: "Moutarde", category: "Condiments & Sauces" },
+    { id: 113, name: "Mayonnaise", category: "Condiments & Sauces" },
+    { id: 114, name: "Sauce soja", category: "Condiments & Sauces" },
+    { id: 115, name: "Vinaigre balsamique", category: "Condiments & Sauces" },
+    { id: 116, name: "Cornichons", category: "Condiments & Sauces" },
+    { id: 117, name: "Sauce barbecue", category: "Condiments & Sauces" },
+    { id: 118, name: "Sauce pesto", category: "Condiments & Sauces" },
+    { id: 119, name: "Sauce tomate", category: "Condiments & Sauces" },
 
-// Navigation
-function showPage(page) {
-  document.querySelectorAll('.page').forEach(p => {
-    p.classList.remove('active');
-    p.style.opacity = 0;
-  });
+    // 🧴 Produits ménagers
+    { id: 120, name: "Liquide vaisselle", category: "Produits ménagers" },
+    { id: 121, name: "Lessive", category: "Produits ménagers" },
+    { id: 122, name: "Éponge", category: "Produits ménagers" },
+    { id: 123, name: "Essuie-tout", category: "Produits ménagers" },
+    { id: 124, name: "Sacs poubelle", category: "Produits ménagers" },
+    { id: 125, name: "Nettoyant multi-usage", category: "Produits ménagers" },
+    { id: 126, name: "Désodorisant", category: "Produits ménagers" },
+    { id: 127, name: "Papier toilette", category: "Produits ménagers" },
+    { id: 128, name: "Éponge abrasive", category: "Produits ménagers" },
+    { id: 129, name: "Lingettes désinfectantes", category: "Produits ménagers" },
 
-  setTimeout(() => {
-    const newPage = document.getElementById('page-' + page);
-    newPage.classList.add('active');
-    setTimeout(() => newPage.style.opacity = 1, 50);
-  }, 150);
+    // 🥤 Boissons
+    { id: 130, name: "Eau minérale", category: "Boissons" },
+    { id: 131, name: "Jus d’orange", category: "Boissons" },
+    { id: 132, name: "Café", category: "Boissons" },
+    { id: 133, name: "Thé", category: "Boissons" },
+    { id: 134, name: "Limonade", category: "Boissons" },
+    { id: 135, name: "Coca-Cola", category: "Boissons" },
+    { id: 136, name: "Bière", category: "Boissons" },
+    { id: 137, name: "Vin rouge", category: "Boissons" },
+    { id: 138, name: "Vin blanc", category: "Boissons" },
+    { id: 139, name: "Eau gazeuse", category: "Boissons" },
+    { id: 140, name: "Jus de pomme", category: "Boissons" },
 
-  if (page === 'list') renderCatalog();
-  if (page === 'recap') renderRecap();
-  if (page === 'live') renderLive();
-
-  // 🔥 affiche la bottom bar uniquement sur la page list
-  const bottomBar = document.getElementById('bottom-bar');
-  bottomBar.style.display = (page === 'list' && basket.length) ? 'flex' : 'none';
-}
+    // Autre
+    { id: 141, name: "Autre - voir détails", category: "Autre" }
+  ];
 
 
-// Welcome timer
-setTimeout(() => {
-  document.getElementById('page-welcome').classList.remove('active');
-  showPage('list');
-}, 3000);
+    const CATEGORY_ICONS = {
+      "Fruits": "🍎",
+      "Légumes": "🥕",
+      "Boulangerie": "🥐",
+      "Produits laitiers": "🧀",
+      "Viandes & Poissons": "🍖",
+      "Épicerie": "🍝",
+      "Épices": "🌶️",
+      "Condiments & Sauces": "🧂",
+      "Produits ménagers": "🧴",
+      "Boissons": "🥤",
+      "Autre": "?"
+    };
 
-// Catalogue
-function renderCatalog(){
-  const q = document.getElementById('search').value.toLowerCase();
-  const filtered = CATALOG.filter(p => p.name.toLowerCase().includes(q));
-  const container = document.getElementById('catalog');
-  container.innerHTML = "";
-  filtered.forEach(prod => {
-    const found = basket.find(p => p.id === prod.id);
-    const div = document.createElement('div');
-    div.className = "product-card";
-    div.innerHTML = `
-    <div class="product-header">
-      <div><strong>${prod.name}</strong> <small>(${prod.category})</small></div>
-      <div class="product-actions">
-        ${found ? `
-          <button class="qty-btn" onclick="changeQty(${prod.id},-1)">-</button>
-          <span class="qty-num">${found.qty}</span>
-          <button class="qty-btn" onclick="changeQty(${prod.id},1)">+</button>
-        ` : `
-          <button class="btn" onclick="addToBasket(${prod.id})">Ajouter</button>
-        `}
-      </div>
-    </div>
-    <span class="details-btn" onclick="toggleDetailsInput('${prod.id}')">Détails</span>
-    <div id="details-input-${prod.id}" class="details-input">
-      <textarea id="textarea-${prod.id}" maxlength="600" placeholder="Ajoutez des précisions (max 100 mots)...">${getDetails(prod)}</textarea>
-      <button class="btn" onclick="saveDetails('${prod.id}')">Valider</button>
-    </div>
-    `;
-    container.appendChild(div);
-  });
-}
+    // --- CRUD FIRESTORE ---
 
-// ---------------   freshly added
-function toggleDetailsInput(id) {
-      const div = document.getElementById(`details-input-${id}`);
-      div.style.display = div.style.display === "none" || div.style.display === "" ? "block" : "none";
+    // CREATE ou UPDATE : ajouter un item ou mettre à jour la quantité
+    async function createOrUpdateItem(prod, qtyDelta = 1) {
+      // On regarde si déjà un doc Firestore avec ce prod.id
+      const existing = basket.find(b => b.prodId === prod.id);
+      if (existing) {
+        // update
+        const docRef = doc(db, "items", existing.docId);
+        const itemQty = existing.qty + qtyDelta;
+        if(itemQty > 0){
+          await updateDoc(docRef, {
+            qty: itemQty <= 0 ? 0 : itemQty
+          });
+        }
+        else {
+          await deleteItem(existing.docId);
+        }
+      } else {
+        // create
+        await addDoc(itemsCol, {
+          prodId: prod.id,
+          name: prod.name,
+          category: prod.category,
+          qty: qtyDelta,
+          details: "",
+          checked: false,
+          createdAt: Date.now()
+        });
+        renderCatalog();
+      }
     }
 
-function toggleDetailsInputRecap(id) {
-  const div = document.getElementById(`details-input-recap-${id}`);
-  div.style.display = div.style.display === "none" || div.style.display === "" ? "block" : "none";
-}
+    // UPDATE des détails
+    async function updateDetails(docId, text) {
+      const docRef = doc(db, "items", docId);
+      await updateDoc(docRef, { details: text });
+    }
 
-function getDetails(item) {
-  return localStorage.getItem(`details_${item}`) || "";
-}
+    // UPDATE du checked depuis Live
+    async function updateChecked(docId, newChecked) {
+      const docRef = doc(db, "items", docId);
+      await updateDoc(docRef, { checked: newChecked });
+    }
 
-function saveDetails(id) {
-      const text = document.getElementById(`textarea-${id}`).value.trim();
-      const words = text.split(/\s+/).filter(Boolean);
-      if (words.length > 100) {
-        alert("Veuillez ne pas dépasser 100 mots !"); //to remove
+    // DELETE un item
+    async function deleteItem(docId) {
+      const docRef = doc(db, "items", docId);
+      await deleteDoc(docRef);
+    }
+
+    // --- LISTENER Firestore : READ en temps réel ---
+    onSnapshot(itemsCol, snapshot => {
+      basket = snapshot.docs.map(d => {
+        const data = d.data();
+        return {
+          docId: d.id,
+          prodId: data.prodId,
+          name: data.name,
+          category: data.category,
+          qty: data.qty,
+          details: data.details,
+          checked: data.checked
+        };
+      });
+      renderCatalog();
+      renderRecap();
+      renderLive();
+      updateBasketCount();
+    });
+
+    // --- Fonctions de rendu / UI ---
+
+    function showPage(page) {
+      document.querySelectorAll(".page").forEach(p => {
+        p.classList.remove("active");
+        p.style.opacity = 0;
+      });
+      setTimeout(() => {
+        const newPage = document.getElementById("page-" + page);
+        newPage.classList.add("active");
+        setTimeout(() => newPage.style.opacity = 1, 50);
+      }, 150);
+
+      if (page === "list") renderCatalog();
+      if (page === "recap") renderRecap();
+      if (page === "live") renderLive();
+
+      // affiche la bottom bar uniquement sur la page “list”
+      const bottomBar = document.getElementById("bottom-bar");
+      bottomBar.style.display = (page === "list" && basket.length) ? "flex" : "none";
+    }
+
+    // Ajout / modification quantité
+    async function changeQty(prodId, delta) {
+      const prod = CATALOG.find(p => p.id === prodId);
+      if (!prod) return;
+      await createOrUpdateItem(prod, delta);
+    }
+
+    async function addToBasket(prodId, delta=1) {
+      const prod = CATALOG.find(p => p.id === prodId);
+      if (!prod) return;
+      await createOrUpdateItem(prod, delta);
+    }
+
+    // Sauvegarde des détails depuis le catalogue
+    async function saveDetailsLocal(prodId) {
+      const obj = basket.find(b => b.docId === prodId);
+      if (!obj) {
+        console.error("Pas d’item Firestore trouvé pour les détails :", prodId);
         return;
       }
-      localStorage.setItem(`details_${id}`, text);
-      document.getElementById(`details-input-${id}`).style.display = "none";
-      //renderLive();
+      
+      const textarea = document.getElementById(`textarea-${prodId}`);
+      await updateDetails(obj.docId, textarea.value.trim());
     }
-  
-function saveDetailsRecap(id) {
-  const text = document.getElementById(`textarea-recap-${id}`).value.trim();
-  const words = text.split(/\s+/).filter(Boolean);
-  if (words.length > 100) {
-    alert("Veuillez ne pas dépasser 100 mots !"); //to remove
-    return;
-  }
-  localStorage.setItem(`details_${id}`, text);
-  document.getElementById(`details-input-recap-${id}`).style.display = "none";
-  //renderLive();
-}
 
-function toggleDetailsViewLive(id) {
-  const div = document.getElementById(`live-details-${id}`);
-  if (div.style.display === "none" || div.style.display === "") {
-    const text = getDetails(id);
-    div.innerText = text ? text : "Aucun détail enregistré.";
-    div.style.display = "block";
-  } else {
-    div.style.display = "none";
-  }
-}
+    async function saveDetailsLocalRecap(docId) {
+      const obj = basket.find(b => b.docId === docId);
+      if (!obj) {
+        console.error("Pas d’item Firestore trouvé pour les détails :", docId);
+        return;
+      }
+      
+      const textarea = document.getElementById(`textarea-${docId}-${obj.prodId}`);
+      await updateDetails(obj.docId, textarea.value.trim());
+    }
 
-function toggleDetailsViewRecap(id) {
-  const div = document.getElementById(`recap-details-${id}`);
-  if (div.style.display === "none" || div.style.display === "") {
-    const text = getDetails(id);
-    div.innerText = text ? text : "Aucun détail enregistré.";
-    div.style.display = "block";
-  } else {
-    div.style.display = "none";
-  }
-}
+    // Toggle input détails dans catalogue
+    function toggleDetailsInput(prodId) {
+      const div = document.getElementById(`details-input-${prodId}`);
+      div.style.display = div.style.display === "block" ? "none" : "block";
+    }
 
-// Ajouter
-function addToBasket(id){
-  const prod = CATALOG.find(p => p.id === id);
-  const found = basket.find(p => p.id === id);
-  if(found){ found.qty += 1; }
-  else { basket.push({ ...prod, qty:1 }); }
-  updateBasketCount();
-  renderCatalog();
-}
+    // Voir / cacher détails dans Live
+    function toggleDetailsViewLive(docId) {
+      const el = document.getElementById(`live-details-${docId}`);
+      const obj = basket.find(b => b.docId === docId);
+      if (!obj) return;
+      if (el.style.display === "block") {
+        el.style.display = "none";
+      } else {
+        el.innerText = obj.details || "Aucun détail";
+        el.style.display = "block";
+      }
+    }
 
-// Modifier quantités
-function changeQty(id, delta){
-  const item = basket.find(p => p.id === id);
-  if(!item) return;
-  item.qty += delta;
-  if(item.qty <= 0) basket = basket.filter(p=>p.id!==id);
-  updateBasketCount();
-  renderCatalog();
-  renderRecap();
-}
+    function finishLive() {
+      basket.forEach(async b => {
+        if (b.checked) {
+          await deleteItem(b.docId);
+        }
+      });
+      showPage("list");
+    }
 
-// Récapitulatif
-function renderRecap(){
-  const container = document.getElementById('recap-content');
-  container.innerHTML = "";
-  const grouped = {};
-  basket.forEach(item=>{
-    if(!grouped[item.category]) grouped[item.category]=[];
-    grouped[item.category].push(item);
-  });
+    function toggleCheck(checkbox, docId, id) {
+      updateChecked(docId, checkbox.checked);
+      if(checkbox.checked) {
+        document.getElementById('name-'+id).classList.remove('checked');}
+    }
 
-  for(const cat in grouped){
-    const div = document.createElement('div');
-    div.className="category";
-    div.innerHTML = `<h3>${CATEGORY_ICONS[cat] || ""} ${cat}</h3>`;
-    grouped[cat].forEach(item=>{
-      const row = document.createElement('div');
-      row.className = "recap-row";
-      row.innerHTML = `
-        <div class="product-header">
-          <div>${item.name}</div>
-          <div class="recap-actions">
-            <button class="recap" onclick="changeQty(${item.id},-1)">-</button>
-            <span class="qty-num">${item.qty}</span>
-            <button class="recap" onclick="changeQty(${item.id},1)">+</button>
+    function updateBasketCount() {
+      const count = basket.reduce((s, i) => s + i.qty, 0);
+      document.getElementById("basket-count").textContent = count + " article(s)";
+    }
+
+    function renderCatalog() {
+      const q = document.getElementById("search").value.toLowerCase();
+      const container = document.getElementById("catalog");
+      container.innerHTML = "";
+      CATALOG.filter(p => p.name.toLowerCase().includes(q)).forEach(prod => {
+        const obj = basket.find(b => b.prodId === prod.id);
+        const qty = obj ? obj.qty : 0;
+
+        const div = document.createElement("div");
+        div.className = "product-card";
+        div.innerHTML = `
+          <div class="product-header">
+            <div><strong>${prod.name}</strong> <small>(${prod.category})</small></div>
+            <div class="product-actions">
+              ${ qty > 0 ? `
+                <button class="qty-btn" onclick="changeQty(${prod.id},-1)">-</button>
+                <span class="qty-num">${qty}</span>
+                <button class="qty-btn" onclick="changeQty(${prod.id},1)">+</button>
+              ` : `
+                <button class="btn" onclick="addToBasket(${prod.id})">Ajouter</button>
+              `}
+            </div>
           </div>
-        </div>
-        <span class="details-btn" onclick="toggleDetailsInputRecap('${item.id}')">Détails</span>
-        <div id="details-input-recap-${item.id}" class="details-input">
-          <textarea id="textarea-recap-${item.id}" maxlength="600" placeholder="Ajoutez des précisions (max 100 mots)...">${getDetails(item)}</textarea>
-          <button class="btn" onclick="saveDetailsRecap('${item.id}')">Valider</button>
-        </div>
-      `;
-      const detailsDivRecap = document.createElement("div");
-      detailsDivRecap.id = `recap-details-${item.id}`;
-      detailsDivRecap.className = "live-details";
+          ${ qty > 0 ?
+          `<span class="details-btn" onclick="toggleDetailsInput('${prod.id}')">Détails</span>
+          ` : ""}
+          <div id="details-input-${prod.id}" class="details-input">
+            <textarea id="textarea-${obj ? obj.docId : prod.id}" maxlength="600">${obj ? obj.details : ""}</textarea>
+            <button class="btn" onclick="saveDetailsLocal('${obj ? obj.docId : ""}')">Valider</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
 
-      div.appendChild(row);
-      div.appendChild(detailsDivRecap);
-    });
-    container.appendChild(div);
-  }
+    function renderRecap() {
+      const container = document.getElementById("recap-content");
+      container.innerHTML = "";
+      const grouped = {};
+      basket.forEach(item => {
+        if (!grouped[item.category]) grouped[item.category] = [];
+        grouped[item.category].push(item);
+      });
+      for (const cat in grouped) {
+        const divCat = document.createElement("div");
+        divCat.className="category";
+        divCat.innerHTML = `<h3>${CATEGORY_ICONS[cat] || ""} ${cat}</h3>`;
+        grouped[cat].forEach(item => {
+          const row = document.createElement("div");
+          row.className = "recap-row";
+          row.innerHTML = `
+            <div class="product-header">
+              <div>${item.name}</div>
+              <div class="recap-actions">
+                <button class="recap" onclick="changeQty(${item.prodId}, -1)">-</button>
+                <span class="qty-num">${item.qty}</span>
+                <button class="recap" onclick="changeQty(${item.prodId}, 1)">+</button>
+              </div>
+            </div>
+            <span class="details-view-btn" onclick="toggleDetailsInput('${item.docId}')">Détails</span>
+            <div id="details-input-${item.docId}" class="details-input">
+              <textarea id="textarea-${item.docId}-${item.prodId}" maxlength="600">${item.details ? item.details : ""}</textarea>
+              <button class="btn" onclick="saveDetailsLocalRecap('${item.docId}')">Valider</button>
+            </div>
+          `;
+          const detailsDivRecap = document.createElement("div");
+          detailsDivRecap.id = `recap-details-${item.id}`;
+          detailsDivRecap.className = "live-details";
 
-  // Bouton unique “commencer les courses”
-  let liveBtn = document.getElementById('start-live-btn');
-  if(!liveBtn){
-    liveBtn = document.createElement('button');
-    liveBtn.id = "start-live-btn";
-    liveBtn.className = "btn btn-live";
-    liveBtn.textContent = "🔴 Commencer les courses";
-    liveBtn.onclick = startLive;
-    container.appendChild(liveBtn);
-  }
-}
+          divCat.appendChild(row);
+          divCat.appendChild(detailsDivRecap);
+        });
+        container.appendChild(divCat);
+      }
 
-// Page live
-function startLive(){ showPage('live'); }
-function renderLive(){
-  const container = document.getElementById('live-content');
-  container.innerHTML = "";
-  const grouped = {};
+        // Bouton unique
+      let liveBtn = document.getElementById('start-live-btn');
+      if(!liveBtn){
+        liveBtn = document.createElement('button');
+        liveBtn.id = "start-live-btn";
+        liveBtn.className = "btn btn-live";
+        liveBtn.textContent = "🔴 Commencer les courses";
+        liveBtn.onclick = startLive;
+        container.appendChild(liveBtn);
+      }
+    }
 
-  basket.forEach(item => {
-    if (!grouped[item.category]) grouped[item.category] = [];
-    grouped[item.category].push({ ...item, checked: false });
-  });
+    function startLive(){ showPage('live'); }
 
-  for (const cat in grouped) {
-    const div = document.createElement('div');
-    div.className = "category";
-    div.innerHTML = `<h3>${CATEGORY_ICONS[cat] || ""} ${cat}</h3>`;
+    function renderLive() {
+      const container = document.getElementById("live-content");
+      container.innerHTML = "";
+      const grouped = {};
+      basket.forEach(item => {
+        if (!grouped[item.category]) grouped[item.category] = [];
+        grouped[item.category].push(item);
+      });
+      for (const cat in grouped) {
+        const divCat = document.createElement("div");
+        divCat.className = "category";
+        divCat.innerHTML = `<h3>${CATEGORY_ICONS[cat] || ""} ${cat}</h3>`;
+        grouped[cat].forEach(item => {
+          const hasDetails = item.details && item.details.trim().length > 0;
+          const row = document.createElement("div");
+          row.className = "live-item";
+          row.innerHTML = `
+            <div class="product-header">
+              <div class="live-left">
+                <input type="checkbox" ${item.checked ? "checked" : ""} onchange="toggleCheck(this, '${item.docId}', '${item.prodId}')">
+                <div class="qty-live">(x${item.qty})</div>
+                <span id="name-${item.prodId}"  class="${item.checked ? "checked" : ""}">${item.name}</span>
+              </div>
+              ${hasDetails
+                ? `<span class="details-view-btn" onclick="toggleDetailsViewLive('${item.docId}')">Détails</span>`
+                : ""}
+            </div>
+            <div id="live-details-${item.docId}" class="live-details">${item.details || ""}</div>
+          `;
+          const detailsDiv = document.createElement("div");
+          detailsDiv.id = `live-details-${item.docId}`;
+          detailsDiv.className = "live-details";
 
-    grouped[cat].forEach(item => {
+          divCat.appendChild(row);
+          divCat.appendChild(detailsDiv);
+        });
+        container.appendChild(divCat);
+      }
+    }
 
-      const details = getDetails(item.id);
-      const hasDetails = details && details.trim().length > 0;
-console.log(hasDetails)
-      const row = document.createElement('div');
-      row.className = "live-item";
+    document.getElementById("search").addEventListener("input", renderCatalog);
 
-      row.innerHTML = `
-      <div class="product-header">
-        <div class="live-left">
-          <input type="checkbox" onchange="toggleCheck(this, ${item.id})">
-          <div class="qty-live">${item.qty}</div>
-          <span id="name-${item.id}">${item.name}</span>
-        </div>
+    setTimeout(() => {
+      showPage("list");
+      document.getElementById("page-welcome").style.display = "none";
+    }, 2000);
 
-        ${hasDetails 
-            ? `<span class="details-view-btn" onclick="toggleDetailsViewLive('${item.id}')">Détails</span>`
-            : ``}
-      </div>`;
-
-      const detailsDiv = document.createElement("div");
-      detailsDiv.id = `live-details-${item.id}`;
-      detailsDiv.className = "live-details";
-
-      div.appendChild(row);
-      div.appendChild(detailsDiv);
-    });
-
-    container.appendChild(div);
-  }
-}
+// --- Fonctions globales accessibles depuis le HTML ---
+    window.showPage = showPage;
+    window.changeQty = changeQty;
+    window.toggleDetailsInput = toggleDetailsInput;
+    window.saveDetailsLocal = saveDetailsLocal;
+    window.toggleDetailsViewLive = toggleDetailsViewLive;
+    window.toggleCheck = toggleCheck;
+    window.addToBasket = addToBasket;
+    window.finishLive = finishLive;
+    window.saveDetailsLocalRecap = saveDetailsLocalRecap;
+    window.renderCatalog = renderCatalog;
+    window.renderRecap = renderRecap;
+    window.renderLive = renderLive;
 
 
-function toggleCheck(checkbox, id){
-  const el = document.getElementById('name-'+id);
-  if(checkbox.checked){ el.classList.add('checked'); }
-  else { el.classList.remove('checked'); }
-}
-
-// Terminer les courses
-function finishLive(){
-  document.querySelectorAll('#live-content input[type="checkbox"]').forEach(chk=>{
-    const id = parseInt(chk.getAttribute('onchange').match(/\d+/)[0]);
-    if(chk.checked) basket = basket.filter(p=>p.id!==id);
-  });
-  updateBasketCount();
-  showPage('list');
-}
-
-// Panier compteur
-function updateBasketCount(){
-  document.getElementById('basket-count').textContent =
-    basket.reduce((s,i)=>s+i.qty,0)+" article(s)";
-  document.getElementById('bottom-bar').style.display = basket.length ? 'flex' : 'none';
-}
-
-setTimeout(() => {
-  showPage('list'); 
-  const welcome = document.getElementById('page-welcome');
-  if(welcome) welcome.style.display = 'none';
-}, 3000);
-
-// Recherche dynamique
-document.getElementById('search').addEventListener('input', renderCatalog);
-
-// Init
-renderCatalog();
-</script>
-
+  </script>
 </body>
 </html>
